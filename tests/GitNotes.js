@@ -12,8 +12,8 @@
 // 3. Verify Git Installation
 // Open Command Prompt and execute commands.
 // git --version
-// git config --global user.name "Your Name"
-// git config --global user.email "yourmail@gmail.com"
+// git config --global user.name "Your Name"//PTtest
+// git config --global user.email "yourmail@gmail.com"//piyushthakur64@gmail.com
 // 4. Create GitHub Repository
 // Repository is used to store project code in GitHub cloud.
 // Login to GitHub
