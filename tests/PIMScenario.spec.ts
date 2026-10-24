@@ -6,7 +6,7 @@ import {test,expect} from '@playwright/test'
 import { LoginPage } from '../page/LoginPage';
 import {PIMPage} from '../page/PIMPage'
 
-test('PIMScenario' , async({page})=>
+test('PIMScenario @smoke' , async({page})=>
 {
 
     const loginpage = new LoginPage(page);
