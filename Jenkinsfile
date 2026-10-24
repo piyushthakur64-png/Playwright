@@ -3,39 +3,94 @@ pipeline {
 
     environment {
         CI = 'true'
+        PLAYWRIGHT_BROWSERS_PATH = "${env.JENKINS_HOME}\\ms-playwright"
+    }
+
+    options {
+        timestamps()
+        timeout(time: 60, unit: 'MINUTES')
     }
 
     stages {
-        stage('Install dependencies') {
+        stage('Clean Reports') {
             steps {
-                script {
-                    if (isUnix()) {
-                        sh 'npm ci'
-                        sh 'npx playwright install --with-deps chromium'
-                    } else {
-                        bat 'npm ci'
-                        bat 'npx playwright install chromium'
-                    }
-                }
+                bat '''
+                    IF EXIST allure-results rmdir /S /Q allure-results
+                    IF EXIST allure-report rmdir /S /Q allure-report
+                    IF EXIST playwright-report rmdir /S /Q playwright-report
+                    IF EXIST test-results rmdir /S /Q test-results
+                '''
             }
         }
 
-        stage('Run smoke tests') {
+        stage('Install Dependencies') {
             steps {
-                script {
-                    if (isUnix()) {
-                        sh 'npx playwright test --grep @smoke'
-                    } else {
-                        bat 'npx playwright test --grep @smoke'
-                    }
-                }
+                bat 'npm ci'
+            }
+        }
+
+        stage('Install Playwright Browsers') {
+            steps {
+                bat 'npx playwright install chromium'
+            }
+        }
+
+        stage('Run Smoke Tests') {
+            steps {
+                bat 'npx playwright test --project=chromium'
             }
         }
     }
 
     post {
         always {
-            archiveArtifacts artifacts: 'playwright-report/**, test-results/**', allowEmptyArchive: true
+            script {
+                if (fileExists('test-results/results.xml')) {
+                    junit testResults: 'test-results/results.xml'
+                } else {
+                    echo 'JUnit results are unavailable because the smoke tests did not run.'
+                }
+
+                if (fileExists('playwright-report/index.html')) {
+                    publishHTML(target: [
+                        reportName: 'Playwright HTML Report',
+                        reportDir: 'playwright-report',
+                        reportFiles: 'index.html',
+                        keepAll: true,
+                        alwaysLinkToLastBuild: true,
+                        allowMissing: true
+                    ])
+                } else {
+                    echo 'Playwright HTML report is unavailable because the smoke tests did not run.'
+                }
+
+                if (fileExists('allure-results')) {
+                    allure([
+                        includeProperties: false,
+                        jdk: '',
+                        results: [[path: 'allure-results']]
+                    ])
+                } else {
+                    echo 'Allure results are unavailable because the smoke tests did not run.'
+                }
+            }
+        }
+
+        success {
+            echo '================================='
+            echo 'Pipeline executed successfully.'
+            echo '================================='
+        }
+
+        failure {
+            echo '================================='
+            echo 'Pipeline execution failed.'
+            echo 'Check Console Output and Reports.'
+            echo '================================='
+        }
+
+        cleanup {
+            cleanWs()
         }
     }
 }
