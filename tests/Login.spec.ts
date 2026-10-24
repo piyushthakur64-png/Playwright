@@ -2,7 +2,7 @@ import{test,expect} from '@playwright/test';
 import{LoginPage} from '../page/LoginPage';
 
 
-test("ValidLogin", async({page}) =>
+test("ValidLogin @smoke", async({page}) =>
     {
         const loginpage = new LoginPage(page);
 
